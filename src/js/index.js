@@ -2,17 +2,12 @@ import {elements, elementStrings, clear, clearFields, updatePattern, renderOne, 
 import swal from 'sweetalert';
 import User from './models/userModel';
 import Users from './models/allusers';
-import { FileDB } from './models/UserFile';
-import {dashboardpage,addFiles} from "./views/dashboard"
-import {addfileform} from "./views/Addfiles"
-import { getDocId, getPreviewScreen } from './views/PreviewScreen';
+
 // Reloads
 const state = {};
 window.addEventListener('load', () => {
-    state.filedb = new FileDB()
     state.users = new Users();
-    
-    //document.body.innerHTML = getPreviewScreen("1cstQmXvVCsdVAze5NmzTfIPt4Y7oE_RR")
+    state.users.restore();
 });
 
 // Registeration Controller
@@ -151,8 +146,7 @@ elements.login.addEventListener('click', e => {
 
         if(graphicMatch) {
             clear();
-            showDashboard()
-            
+            swal('Log in successful!');
         }
     }
 });
@@ -160,22 +154,20 @@ elements.login.addEventListener('click', e => {
 const oLevelOne = (users) => {
 
     if(document.querySelector(elementStrings.formOne).checkValidity()) {
-        let user = document.querySelector(elementStrings.username).value
-        let passw = document.querySelector(elementStrings.password).value
-        const found = users.getAllUsers().find(el => el.username === user);
+        const found = users.getAllUsers().find(el => el.username === document.querySelector(elementStrings.username).value);
         if(!found) {
             swal('There is no matching account for the username you entered!');
             return false;
         }
         state.current = found;
         Object.setPrototypeOf(state.current, User.prototype);
-        const match = state.current.comparePassword(passw);
+        const match = state.current.comparePassword(document.querySelector(elementStrings.password).value);
 
         if(!match) {
             swal('Username and password do not match!');
             return false;
         }
-        localStorage.setItem("curr_user",JSON.stringify(user))
+        
         return true;
     }
 };
@@ -239,72 +231,6 @@ elements.remove.addEventListener('click', () => {
         state.users.reset();
         state.users = new Users();
     }
- clear();
+
+    clear();
 })
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*                                                    dashboard                                                */
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-const showDashboard = ()=>{
-    let rows = addFiles(state.filedb.getAllFiles())
-    let dashboard = ``
-    if (rows.length){
-        dashboard = dashboardpage.replace("%_rows%",rows)
-    }
-    else{
-        dashboard = dashboardpage.replace("%_rows%","Nothing to show")
-    }
-    elements.mainBody.innerHTML = dashboard
-    elements.newfile_btn.item(0).addEventListener("click",(e)=>{
-        showAddFile()
-    })
-    setDeletebtn()
-    setPreviewbtn()
-}
-
-// file delete controll
-
-export const deleteFile = (key)=>{
-    state.filedb.removefile(key)
-}
-
-const setDeletebtn = ()=>{
-    for (let i = 0; i < elements.file_delete_btns.length; i++) {
-        elements.file_delete_btns.item(i).addEventListener("click",(e)=>{
-            deleteFile(e.path[2].getElementsByTagName("input")[0].value)
-            showDashboard()
-        })
-    }
-}
-
-const setPreviewbtn = ()=>{
-    console.log("preview btn")
-    for (let i = 0; i < elements.preview_btns.length; i++) {
-        elements.preview_btns.item(i).addEventListener("click",(e)=>{
-            let url = e.path[2].getElementsByTagName("a")[0].href
-            let doc_id = getDocId(url)
-            let previewscreen = getPreviewScreen(doc_id)
-            elements.preview[0].innerHTML = previewscreen
-            setPreviewClosebtn()
-        })
-    }
-}
-const setPreviewClosebtn = ()=>{
-    elements.preview_close_btn[0].addEventListener("click",()=>{
-        showDashboard()
-    })
-}
-// addfiles show
-export const showAddFile = ()=>{
-    elements.mainBody.innerHTML = addfileform
-    elements.addFile_btn.item(0).addEventListener("click",(e)=>{
-        let data = {}
-        data.title = document.getElementsByName("file_name").item(0).value
-        data.link = document.getElementsByName("file_link").item(0).value
-        data.key = (Number.parseInt((Math.random()*1000).toString())).toString()
-        state.filedb.addFile(data)
-        showDashboard()
-    })
-}
-

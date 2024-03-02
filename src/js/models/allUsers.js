@@ -1,7 +1,6 @@
 export default class Users {
     constructor() {
         this.users = [];
-        this.restore()
     }
 
     getAllUsers() {
